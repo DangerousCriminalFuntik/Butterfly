@@ -128,7 +128,7 @@ int main()
 		
 	GLuint vbo[2];
 	glCreateBuffers(2, vbo);
-	glNamedBufferStorage(vbo[0], vertices.size() * sizeof(Vertex), vertices.data(), 0);
+	glNamedBufferStorage(vbo[0], vertices.size() * sizeof(Vertex), vertices.data(), GL_DYNAMIC_STORAGE_BIT);
 	glNamedBufferStorage(vbo[1], indices.size() * sizeof(GLuint), indices.data(), 0);
 	
 	GLuint vao;
@@ -149,26 +149,26 @@ int main()
 	texture[1] = loadTexture("Butterfly2.png");
 	texture[2] = loadTexture("Butterfly3.png");
 
-	glEnable(GL_DEPTH_TEST);
+	glDisable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
-	for (int i = 0; i < obj.size(); ++i) // Loop To Initialize 50 Objects
+	for (size_t i = 0; i < obj.size(); ++i) // Loop To Initialize 50 Objects
 	{
 		SetObject(i);	// Call SetObject To Assign New Random Values
 	}
 						
 	while (!glfwWindowShouldClose(window))
 	{
-		glClearBufferfv(GL_COLOR, 0, &glm::vec4(0.3f, 0.5f, 0.9f, 1.0f)[0]);
+		glClearBufferfv(GL_COLOR, 0, &glm::vec4(0.0f, 0.0f, 0.0f, 0.5f)[0]);
 		glClearBufferfv(GL_DEPTH, 0, &glm::vec4(1.0f)[0]);
 
 		auto aspectRatio = static_cast<float>(width) / static_cast<float>(height);
 		glm::mat4 projectionMatrix = glm::perspective(glm::radians(45.0f), aspectRatio, 0.1f, 100.0f);
 		glm::mat4 modelViewMatrix = glm::mat4(1.0f);
 
-		for (int i = 0; i < obj.size(); ++i)
+		for (size_t i = 0; i < obj.size(); ++i)
 		{
 			modelViewMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(obj[i].x, obj[i].y, obj[i].z));
 			modelViewMatrix = glm::rotate(modelViewMatrix, glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 0.0f)); // Rotate On The X-Axis
@@ -179,7 +179,7 @@ int main()
 			vertices[5].position.z = obj[i].flap;
 			
 			// Upload the updated vertex data to the VBO
-			glNamedBufferSubData(vbo[0], 0, sizeof(vertices), &vertices);
+			glNamedBufferSubData(vbo[0], 0, vertices.size() * sizeof(Vertex), vertices.data());
 			
 			glBindProgramPipeline(pipeline);
 			glProgramUniformMatrix4fv(program, mvp_loc, 1, GL_FALSE, glm::value_ptr(projectionMatrix * modelViewMatrix));
@@ -188,7 +188,7 @@ int main()
 			glBindTextureUnit(0, texture[obj[i].tex]);
 
 			glBindVertexArray(vao);
-			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+			glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indices.size()), GL_UNSIGNED_INT, nullptr);
 			glBindVertexArray(0);
 			
 			obj[i].y -= obj[i].yi; // Move Object Down The Screen
